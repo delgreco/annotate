@@ -1,5 +1,13 @@
 #!/usr/bin/env raku
 
+my $p = $*PROGRAM.absolute;
+my $path-obj = $p.IO;
+my $progdir = $path-obj.dirname;
+
+if $*CWD ne $progdir {
+    die "Error: script must be run from its own directory: $progdir";
+}
+
 my $template-file = 'index.tmpl';
 
 my $directory = prompt("Enter a directory path: ");
@@ -18,6 +26,7 @@ if $directory.IO.d {
 } 
 else {
     say "The path you entered is not a directory or does not exist.";
+    say "Path: {$directory.IO}";
 }
 
 sub index() {
