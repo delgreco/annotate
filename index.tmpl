@@ -1,37 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><!-- TITLE_PLACEHOLDER --></title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-        }
-        h1 {
-            color: #333;
-        }
-        ul {
-            list-style-type: none;
-            padding-left: 0;
-        }
-        li {
-            margin: 10px 0;
-        }
-        a {
-            text-decoration: none;
-            color: #007BFF;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title><!-- TITLE --></title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        margin: 20px;
+    }
+    h1 {
+        color: #333;
+    }
+    ul {
+        list-style-type: none;
+        padding-left: 0;
+    }
+    li {
+        margin: 10px 0;
+    }
+    a {
+        text-decoration: none;
+        color: #007BFF;
+    }
+    a:hover {
+        text-decoration: underline;
+    }
+</style>
+
+<script>
+
+function showImg(filename, notes) {
+    const image = document.getElementById('img');
+    image.src = filename;
+    const img_link = document.getElementById('img_link');
+    img_link.href = filename;
+    const captionElement = document.getElementById('caption');
+    captionElement.textContent = filename + ': ' + notes;
+}
+
+</script
+
 </head>
 <body>
-    <h1><!-- TITLE_PLACEHOLDER --></h1>
+
+<div style="float: right; width: 50%; text-align: right;">
+    <figure id="random_img" style="text-align: center;">
+    <a id="img_link" target="_blank" href="<!-- RANDOM_IMAGE -->"><img id="img" src="<!-- RANDOM_IMAGE -->" style="max-width: 100%;"></a><br>
+    <figcaption id="caption"><!-- RANDOM_IMAGE_CAPTION --></figcaption>
+    </figure>
+</div>
+<div style="float: left; width: 50%;">
+    <h1><!-- TITLE --></h1>
     <ul>
-        <!-- CONTENT_PLACEHOLDER -->
+        <!-- CONTENT -->
     </ul>
+</div>
+<div style="clear: both;"></div>
+
+
 </body>
 </html>

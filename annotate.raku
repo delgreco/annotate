@@ -70,18 +70,24 @@ sub index() {
         if $file.f {
             # say "Processing file: {$file.basename}"; # Use the filename
             if %notes{$file.basename}:exists {
-                $content ~= "<li><a href='{$file.basename}'>{$file.basename}</a>: { %notes{ $file.basename } }</li>\n";
+                $content ~= "<li><a onClick=\"showImg('{$file.basename}', '{%notes{$file.basename}}');\">{$file.basename}</a>: { %notes{ $file.basename } }</li>\n";
             }
             else {
-                $content ~= "<li><a href='{$file.basename}'>{$file.basename}</a></li>\n";
+                $content ~= "<li><a onClick=\"showImg('{$file.basename}');\">{$file.basename}</a></li>\n";
             }
             # $content ~= '<li><a href="' ~ {$file.basename.gist} ~ '">' ~ {$file.basename.gist} ~ '</a>: ' ~ %notes{ {$file.basename.gist} } ~ '</li>' ~ "\n";
         }
     }
     # read the template and replace the placeholder
     my $template = $template-file.IO.slurp;
-    $template ~~ s/'<!-- CONTENT_PLACEHOLDER -->'/$content/;
-    $template ~~ s:g/'<!-- TITLE_PLACEHOLDER -->'/$title/;
+    $template ~~ s/'<!-- CONTENT -->'/$content/;
+    $template ~~ s:g/'<!-- TITLE -->'/$title/;
+    # pick a random image to display for spice
+    my @images = $directory.IO.dir.grep(*.IO.f).map(*.basename);
+    my $randomimg = @images.pick;
+    $template ~~ s:g/'<!-- RANDOM_IMAGE -->'/$randomimg/;
+    my $caption = "$randomimg: { %notes{$randomimg} // '' }";
+    $template ~~ s:g/'<!-- RANDOM_IMAGE_CAPTION -->'/$caption/;
     # write the output to index.html
     $output-file.IO.spurt($template);
     say "Generated 'index.html' successfully at: $output-file";
