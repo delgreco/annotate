@@ -70,7 +70,9 @@ sub index() {
         if $file.f {
             # say "Processing file: {$file.basename}"; # Use the filename
             if %notes{$file.basename}:exists {
-                $content ~= "<li><a onClick=\"showImg('{$file.basename}', '{%notes{$file.basename}}');\">{$file.basename}</a>: { %notes{ $file.basename } }</li>\n";
+                # escape single quotes for JavaScript
+                my $notes = %notes{$file.basename}.subst("'", "\\'", :g);
+                $content ~= "<li><a onClick=\"showImg('{$file.basename}', '$notes');\">{$file.basename}</a>: { %notes{ $file.basename } }</li>\n";
             }
             else {
                 $content ~= "<li><a onClick=\"showImg('{$file.basename}');\">{$file.basename}</a></li>\n";
