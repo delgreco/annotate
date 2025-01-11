@@ -72,10 +72,10 @@ sub index() {
             if %notes{$file.basename}:exists {
                 # escape single quotes for JavaScript
                 my $notes = %notes{$file.basename}.subst("'", "\\'", :g);
-                $content ~= "<li><a onClick=\"showImg('{$file.basename}', '$notes');\">{$file.basename}</a>: { %notes{ $file.basename } }</li>\n";
+                $content ~= "<li><a href='#' onClick=\"showImg('{$file.basename}', '$notes');\">{$file.basename}</a>: { %notes{ $file.basename } }</li>\n";
             }
             else {
-                $content ~= "<li><a onClick=\"showImg('{$file.basename}');\">{$file.basename}</a></li>\n";
+                $content ~= "<li><a href='#' onClick=\"showImg('{$file.basename}');\">{$file.basename}</a></li>\n";
             }
             # $content ~= '<li><a href="' ~ {$file.basename.gist} ~ '">' ~ {$file.basename.gist} ~ '</a>: ' ~ %notes{ {$file.basename.gist} } ~ '</li>' ~ "\n";
         }
