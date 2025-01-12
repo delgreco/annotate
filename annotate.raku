@@ -62,14 +62,16 @@ sub index() {
     }
     # say %notes;
     # build index from all files in directory
+    my $filecount = 0;
     for $directory.IO.dir.sort -> $file {
         # skip Annotations.txt or .Annotations.txt.swp
         next if $file.basename ~~ / ^ \.?Annotations\.txt.* $ /;
+        next if $file.basename eq '.DS_Store';
+        next if $file.basename eq 'index.html';
         # say "File object: {$file.^name}";
         # Check if it is a file (not a directory)
         if $file.f {
             # say "Processing file: {$file.basename}"; # Use the filename
-            next if $file.basename eq '.DS_Store';
             if %notes{$file.basename}:exists {
                 # escape single quotes for JavaScript
                 my $notes = %notes{$file.basename}.subst("'", "\\'", :g);
@@ -78,6 +80,7 @@ sub index() {
             else {
                 $content ~= "<li><a href='#' onClick=\"showImg('{$file.basename}');\">{$file.basename}</a></li>\n";
             }
+            $filecount++;
             # $content ~= '<li><a href="' ~ {$file.basename.gist} ~ '">' ~ {$file.basename.gist} ~ '</a>: ' ~ %notes{ {$file.basename.gist} } ~ '</li>' ~ "\n";
         }
     }
@@ -85,6 +88,7 @@ sub index() {
     my $template = $template-file.IO.slurp;
     $template ~~ s/'<!-- CONTENT -->'/$content/;
     $template ~~ s:g/'<!-- TITLE -->'/$title/;
+    $template ~~ s:g/'<!-- COUNT -->'/$filecount/;
     # pick a random image to display for spice
     my @images = $directory.IO.dir.grep(*.IO.f).map(*.basename);
     my $randomimg = @images.pick;
