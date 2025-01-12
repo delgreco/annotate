@@ -69,6 +69,7 @@ sub index() {
         # Check if it is a file (not a directory)
         if $file.f {
             # say "Processing file: {$file.basename}"; # Use the filename
+            next if $file.basename eq '.DS_Store';
             if %notes{$file.basename}:exists {
                 # escape single quotes for JavaScript
                 my $notes = %notes{$file.basename}.subst("'", "\\'", :g);
