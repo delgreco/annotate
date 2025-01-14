@@ -74,7 +74,8 @@ sub index() {
             # say "Processing file: {$file.basename}"; # Use the filename
             if %notes{$file.basename}:exists {
                 # escape single quotes for JavaScript
-                my $notes = %notes{$file.basename}.subst("'", "\\'", :g);
+                # and convert any double into escaped singles
+                my $notes = %notes{$file.basename}.subst("'", "\\'", :g).subst('"', "\\'", :g);
                 $content ~= "<li><a href='#' onClick=\"showImg('{$file.basename}', '$notes');\">{$file.basename}</a>: { %notes{ $file.basename } }</li>\n";
             }
             else {
