@@ -60,29 +60,59 @@ sub index() {
             say "Invalid format: $line";
         }
     }
-    # say %notes;
+    #say %notes;
     # build index from all files in directory
-    my $filecount = 0;
+    my $filecount = 0; my $series = 0;
+    my $previous_name = '';
     for $directory.IO.dir.sort -> $file {
         # skip Annotations.txt or .Annotations.txt.swp
         next if $file.basename ~~ / ^ \.?Annotations\.txt.* $ /;
         next if $file.basename eq '.DS_Store';
         next if $file.basename eq 'index.html';
         # say "File object: {$file.^name}";
-        # Check if it is a file (not a directory)
+        # if it's a file (not a directory)
         if $file.f {
             # say "Processing file: {$file.basename}"; # Use the filename
-            if %notes{$file.basename}:exists {
-                # escape single quotes for JavaScript
-                # and convert any double into escaped singles
-                my $notes = %notes{$file.basename}.subst("'", "\\'", :g).subst('"', "\\'", :g);
-                $content ~= "<li><a href='#' onClick=\"showImg('{$file.basename}', '$notes');\">{$file.basename}</a>: { %notes{ $file.basename } }</li>\n";
+            my $num; my $name;
+            # look for files in series like: Fire_01.jpeg
+            if $file.basename ~~ /(.+?)(\d+)?\..+$/ {
+                $name = $/[0] // 'None';
+                $name = $name.subst("_", " ", :g);
+                # say $file.basename;
+                if $/[1] { 
+                    $series++;
+                    $num = $/[1];
+                    say "Detected series marker for {$file.basename}: " ~ $/[1] ~ " " ~ $name;
+                    say "Prev: {$previous_name} Current: {$name}";
+                    if $previous_name && $previous_name ne $name {
+                        $series = 0;  # reset
+                    }
+                }
+                else {
+                    $series = 0;  # reset, as it's not a series file
+                }
             }
             else {
-                $content ~= "<li><a href='#' onClick=\"showImg('{$file.basename}');\">{$file.basename}</a></li>\n";
+                say "ERROR: file should match regex";
             }
+            if $series > 0 {
+                $content ~= "&nbsp; - <a href='#' onClick=\"showImg('{$file.basename}');\">{$num}</a> ";
+            }
+            else {
+                if %notes{$file.basename}:exists {
+                    # escape single quotes for JavaScript
+                    # and convert any double into escaped singles
+                    my $notes = %notes{$file.basename}.subst("'", "\\'", :g).subst('"', "\\'", :g);
+                    
+                    $content ~= "<li><a href='#' onClick=\"showImg('{$file.basename}', '$notes');\">{$name}</a>: { %notes{ $file.basename } }";
+                }
+                else {
+                    $content ~= "<li><a href='#' onClick=\"showImg('{$file.basename}');\">{$name}</a>";
+                }
+            }
+            $content ~= "</li>\n" if $series == 0;
             $filecount++;
-            # $content ~= '<li><a href="' ~ {$file.basename.gist} ~ '">' ~ {$file.basename.gist} ~ '</a>: ' ~ %notes{ {$file.basename.gist} } ~ '</li>' ~ "\n";
+            $previous_name = $name;
         }
     }
     # read the template and replace the placeholder

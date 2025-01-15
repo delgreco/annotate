@@ -36,7 +36,12 @@ function showImg(filename, notes) {
     const img_link = document.getElementById('img_link');
     img_link.href = filename;
     const captionElement = document.getElementById('caption');
-    captionElement.textContent = filename + ': ' + notes;
+    if ( notes ) {
+        captionElement.textContent = filename + ': ' + notes;
+    }
+    else {
+        captionElement.textContent = filename;
+    }
 }
 
 </script
