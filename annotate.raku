@@ -10,26 +10,24 @@ if $*CWD ne $progdir {
 
 my $template-file = 'index.tmpl';
 
-my $directory = prompt("Enter a directory path: ");
+my $dir = prompt("Enter a directory path: ");
 
-my $output-file = "$directory/index.html";
-my $annotations-file = "$directory/Annotations.txt";
+index( :directory($dir) );
 
-if $directory.IO.d {
-    # say "You entered a valid directory: $directory";
-    if $annotations-file.IO.f {
-        index();
-    }
+sub index( :$directory ) {
+    my $output-file = "$directory/index.html";
+    my $annotations-file = "$directory/Annotations.txt";
+    if $directory.IO.d {
+        if ! $annotations-file.IO.f {
+            say "The file 'Annotations.txt' does not exist in directory '$directory'.";
+            return;
+        }
+    } 
     else {
-        say "The file 'Annotations.txt' does not exist in directory '$directory'.";
+        say "The path you entered is not a directory or does not exist.";
+        say "Path: {$directory.IO}";
+        return;
     }
-} 
-else {
-    say "The path you entered is not a directory or does not exist.";
-    say "Path: {$directory.IO}";
-}
-
-sub index() {
     my %notes;
     my $content = ''; my $title = '';
     # load titles and notes
@@ -44,15 +42,8 @@ sub index() {
         if $line ~~ / ^ (.*?) \: (.+) $ / {
             my $filename = $0;
             my $annotation = $1;
-            # say "File: $filename";
-            # say "Annotation: $annotation";
             %notes{$filename} = $annotation;
-            if $filename && $annotation {
-                # $content ~= "<li><a href='$filename'\>$filename\</a\>: $annotation\</li\>\n";
-                # say "-" x 40;  # separator
-                # great
-            }
-            else {
+            if ! $filename || ! $annotation {
                 say "Invalid capture: $filename, $annotation";
             }
         }
@@ -63,16 +54,19 @@ sub index() {
     #say %notes;
     # build index from all files in directory
     my $filecount = 0; my $series = 0;
-    my $previous_name = '';
+    my $previous_name = ''; my @subdirs;
     for $directory.IO.dir.sort -> $file {
         # skip Annotations.txt or .Annotations.txt.swp
         next if $file.basename ~~ / ^ \.?Annotations\.txt.* $ /;
         next if $file.basename eq '.DS_Store';
         next if $file.basename eq 'index.html';
         # say "File object: {$file.^name}";
-        # if it's a file (not a directory)
-        if $file.f {
-            # say "Processing file: {$file.basename}"; # Use the filename
+        if $file.IO.d {  # subdirectory recursion
+            index( :directory( "$directory/{$file.basename}" ) );
+            # push @subdirs, $file.basename;
+            $content ~= "<li> 📁 <a href='{$file.basename}/index.html'>{$file.basename}</a></li>\n";
+        }
+        elsif $file.f {  # normal file processing
             my $num; my $name;
             # look for files in series like: Fire_01.jpeg
             if $file.basename ~~ /(.+?)(\d+)?\..+$/ {
@@ -82,8 +76,8 @@ sub index() {
                 if $/[1] { 
                     $series++;
                     $num = $/[1];
-                    say "Detected series marker for {$file.basename}: " ~ $/[1] ~ " " ~ $name;
-                    say "Prev: {$previous_name} Current: {$name}";
+                    # say "Detected series marker for {$file.basename}: " ~ $/[1] ~ " " ~ $name;
+                    # say "Prev: {$previous_name} Current: {$name}";
                     if $previous_name && $previous_name ne $name {
                         $series = 0;  # reset
                     }
@@ -113,6 +107,9 @@ sub index() {
             $content ~= "</li>\n" if $series == 0;
             $filecount++;
             $previous_name = $name;
+        }
+        else {
+            say "This is neither a directory nor a normal file: {$file.basename}";
         }
     }
     # read the template and replace the placeholder
