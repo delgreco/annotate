@@ -12,7 +12,7 @@ my $dir = prompt("Enter a directory path: ");
 
 my $filecount = index( :directory($dir) );
 
-sub index( :$directory ) {
+sub index( :$directory, :$subdir = 0 ) {
     my $output-file = "$directory/index.html";
     my $annotations-file = "$directory/Annotations.txt";
     if $directory.IO.d {
@@ -61,7 +61,7 @@ sub index( :$directory ) {
         next if $file.basename eq 'index.html';
         # say "File object: {$file.^name}";
         if $file.IO.d {  # subdirectory recursion
-            my $count = index( :directory( "$directory/{$file.basename}" ) );
+            my $count = index( :directory( "$directory/{$file.basename}" ), :subdir(1) );
             $totalsubfiles = $totalsubfiles + $count;
             $subdirs ~= "<li> 📁 <a href='{$file.basename}/index.html'>{$file.basename}</a></li>\n";
         }
@@ -114,7 +114,11 @@ sub index( :$directory ) {
     # read the template and replace the placeholder
     my $template-file = 'index.tmpl';
     my $template = $template-file.IO.slurp;
+    # if we *have* subdirectories
     $template ~~ s/'<!-- SUBDIRS -->'/$subdirs/ if $subdirs;
+    # if we *are* a subdirectory
+    my $linkup = "<h3><a href='../index.html'>../</a></h3>";
+    $template ~~ s/'<!-- SUBDIR -->'/$linkup/ if $subdir;
     $template ~~ s/'<!-- CONTENT -->'/$content/;
     $template ~~ s:g/'<!-- TITLE -->'/$title/;
     $template ~~ s:g/'<!-- COUNT -->'/$filecount/;
