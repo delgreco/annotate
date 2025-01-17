@@ -8,11 +8,9 @@ if $*CWD ne $progdir {
     die "Error: script must be run from its own directory: $progdir";
 }
 
-my $template-file = 'index.tmpl';
-
 my $dir = prompt("Enter a directory path: ");
 
-index( :directory($dir) );
+my $filecount = index( :directory($dir) );
 
 sub index( :$directory ) {
     my $output-file = "$directory/index.html";
@@ -53,7 +51,8 @@ sub index( :$directory ) {
     }
     #say %notes;
     # build index from all files in directory
-    my $filecount = 0; my $series = 0;
+    my $filecount = 0; my $totalsubfiles = 0;
+    my $series = 0;
     my $previous_name = ''; my $subdirs;
     for $directory.IO.dir.sort -> $file {
         # skip Annotations.txt or .Annotations.txt.swp
@@ -62,7 +61,8 @@ sub index( :$directory ) {
         next if $file.basename eq 'index.html';
         # say "File object: {$file.^name}";
         if $file.IO.d {  # subdirectory recursion
-            index( :directory( "$directory/{$file.basename}" ) );
+            my $count = index( :directory( "$directory/{$file.basename}" ) );
+            $totalsubfiles = $totalsubfiles + $count;
             $subdirs ~= "<li> 📁 <a href='{$file.basename}/index.html'>{$file.basename}</a></li>\n";
         }
         elsif $file.f {  # normal file processing
@@ -112,11 +112,14 @@ sub index( :$directory ) {
         }
     }
     # read the template and replace the placeholder
+    my $template-file = 'index.tmpl';
     my $template = $template-file.IO.slurp;
     $template ~~ s/'<!-- SUBDIRS -->'/$subdirs/ if $subdirs;
     $template ~~ s/'<!-- CONTENT -->'/$content/;
     $template ~~ s:g/'<!-- TITLE -->'/$title/;
     $template ~~ s:g/'<!-- COUNT -->'/$filecount/;
+    my $total = $totalsubfiles + $filecount;
+    $template ~~ s:g/'<!-- TOTAL -->'/($total total)/ if $total != $filecount;
     # pick a random image to display for spice
     my @images = $directory.IO.dir
         .grep(*.IO.f)                     # only files
@@ -129,6 +132,7 @@ sub index( :$directory ) {
     # write the output to index.html
     $output-file.IO.spurt($template);
     say "Generated 'index.html' successfully at: $output-file";
+    return $filecount;
 }
 
 
