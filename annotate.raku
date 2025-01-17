@@ -54,7 +54,7 @@ sub index( :$directory ) {
     #say %notes;
     # build index from all files in directory
     my $filecount = 0; my $series = 0;
-    my $previous_name = ''; my @subdirs;
+    my $previous_name = ''; my $subdirs;
     for $directory.IO.dir.sort -> $file {
         # skip Annotations.txt or .Annotations.txt.swp
         next if $file.basename ~~ / ^ \.?Annotations\.txt.* $ /;
@@ -63,8 +63,7 @@ sub index( :$directory ) {
         # say "File object: {$file.^name}";
         if $file.IO.d {  # subdirectory recursion
             index( :directory( "$directory/{$file.basename}" ) );
-            # push @subdirs, $file.basename;
-            $content ~= "<li> 📁 <a href='{$file.basename}/index.html'>{$file.basename}</a></li>\n";
+            $subdirs ~= "<li> 📁 <a href='{$file.basename}/index.html'>{$file.basename}</a></li>\n";
         }
         elsif $file.f {  # normal file processing
             my $num; my $name;
@@ -114,11 +113,15 @@ sub index( :$directory ) {
     }
     # read the template and replace the placeholder
     my $template = $template-file.IO.slurp;
+    $template ~~ s/'<!-- SUBDIRS -->'/$subdirs/ if $subdirs;
     $template ~~ s/'<!-- CONTENT -->'/$content/;
     $template ~~ s:g/'<!-- TITLE -->'/$title/;
     $template ~~ s:g/'<!-- COUNT -->'/$filecount/;
     # pick a random image to display for spice
-    my @images = $directory.IO.dir.grep(*.IO.f).map(*.basename);
+    my @images = $directory.IO.dir
+        .grep(*.IO.f)                     # only files
+        .grep({ $_.extension ne 'txt' })  # exclude .txt file
+        .map(*.basename);                 # get the filenames
     my $randomimg = @images.pick;
     $template ~~ s:g/'<!-- RANDOM_IMAGE -->'/$randomimg/;
     my $caption = "$randomimg: { %notes{$randomimg} // '' }";
