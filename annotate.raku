@@ -120,6 +120,14 @@ sub index( :$directory, :$subdir = 0 ) {
     $template ~~ s/'<!-- SUBDIR -->'/$linkup/ if $subdir;
     $template ~~ s/'<!-- CONTENT -->'/$content/;
     $template ~~ s:g/'<!-- TITLE -->'/$title/;
+    my $now = DateTime.now;
+    $now = sprintf '%04d-%02d-%02d %02d:%02d',
+    $now.year,
+    $now.month,
+    $now.day,
+    $now.hour,
+    $now.minute;
+    $template ~~ s:g/'<!-- DATETIME -->'/$now/;
     $template ~~ s:g/'<!-- COUNT -->'/$filecount/;
     my $total = $totalsubfiles + $filecount;
     $template ~~ s:g/'<!-- TOTAL -->'/($total total)/ if $total != $filecount;
