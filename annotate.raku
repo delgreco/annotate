@@ -63,21 +63,21 @@ sub index( :$directory, :$subdir = 0 ) {
         if $file.IO.d {  # subdirectory recursion
             my $count = index( :directory( "$directory/{$file.basename}" ), :subdir(1) );
             $totalsubfiles = $totalsubfiles + $count;
-            $subdirs ~= "<li> 📁 <a href='{$file.basename}/index.html'>{$file.basename}</a></li>\n";
+            $subdirs ~= "<li><a href='{$file.basename}/index.html'> 📁 {$file.basename}</a></li>\n";
         }
         elsif $file.f {  # normal file processing
+            $filecount++;
             my $num; my $name;
             # look for files in series like: Fire_01.jpeg
             if $file.basename ~~ /(.+?)(\d+)?\..+$/ {
                 $name = $/[0] // 'None';
                 $name = $name.subst("_", " ", :g);
-                # say $file.basename;
                 if $/[1] { 
                     $series++;
                     $num = $/[1];
-                    # say "Detected series marker for {$file.basename}: " ~ $/[1] ~ " " ~ $name;
-                    # say "Prev: {$previous_name} Current: {$name}";
-                    if $previous_name && $previous_name ne $name {
+                    # reset series for first file so name displays
+                    # or reset if we have a new file from new series
+                    if $filecount == 1 || ($previous_name && $previous_name ne $name) {
                         $series = 0;  # reset
                     }
                 }
@@ -104,7 +104,6 @@ sub index( :$directory, :$subdir = 0 ) {
                 }
             }
             $content ~= "</li>\n" if $series == 0;
-            $filecount++;
             $previous_name = $name;
         }
         else {
