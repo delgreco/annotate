@@ -63,7 +63,7 @@ sub index( :$directory, :$subdir = 0 ) {
         if $file.IO.d {  # subdirectory recursion
             my $count = index( :directory( "$directory/{$file.basename}" ), :subdir(1) );
             $totalsubfiles = $totalsubfiles + $count;
-            $subdirs ~= "<li><a href='{$file.basename}/index.html'> 📁 {$file.basename}</a></li>\n";
+            $subdirs ~= "<li><a href='{$file.basename}/index.html'> 📁 {$file.basename} ({$count})</a></li>\n";
         }
         elsif $file.f {  # normal file processing
             $filecount++;
