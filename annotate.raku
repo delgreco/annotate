@@ -1,16 +1,25 @@
 #!/usr/bin/env raku
 
-my $p = $*PROGRAM.absolute;
-my $path-obj = $p.IO;
-my $progdir = $path-obj.dirname;
-
-if $*CWD ne $progdir {
-    die "Error: script must be run from its own directory: $progdir";
+sub MAIN(
+    Str :$dir = '', # optional: --dir=[directory]
+) {
+    my $d = $dir;
+    my $p = $*PROGRAM.absolute;
+    my $path-obj = $p.IO;
+    my $progdir = $path-obj.dirname;
+    if $*CWD ne $progdir {
+        die "Error: script must be run from its own directory: $progdir";
+    }
+    unless $d {
+        $d = prompt("Enter a directory path: ");
+    }
+    if ( $d ) {
+        my $filecount = index( :directory($d) );
+    }
+    else {
+        say "ERROR: directory not defined.";
+    }
 }
-
-my $dir = prompt("Enter a directory path: ");
-
-my $filecount = index( :directory($dir) );
 
 sub index( :$directory, :$subdir = 0 ) {
     my $output-file = "$directory/index.html";
@@ -63,13 +72,16 @@ sub index( :$directory, :$subdir = 0 ) {
         if $file.IO.d {  # subdirectory recursion
             my $count = index( :directory( "$directory/{$file.basename}" ), :subdir(1) );
             $totalsubfiles = $totalsubfiles + $count;
-            $subdirs ~= "<li><a href='{$file.basename}/index.html'> 📁 {$file.basename} ({$count})</a></li>\n";
+            $subdirs ~= "<li><a href='{$file.basename}/index.html'> 📁 {$file.basename} ($count)</a></li>\n";
         }
         elsif $file.f {  # normal file processing
             $filecount++;
             my $num; my $name;
             # look for files in series like: Fire_01.jpeg
             if $file.basename ~~ /(.+?)(\d+)?\..+$/ {
+                # note that our captured values are actually match objects
+                # that need to be braced to strings like {$name} and {$num}
+                # for interpolation below
                 $name = $/[0] // 'None';
                 $name = $name.subst("_", " ", :g);
                 if $/[1] { 
@@ -142,7 +154,7 @@ sub index( :$directory, :$subdir = 0 ) {
     $template ~~ s:g/'<!-- RANDOM_IMAGE_CAPTION -->'/$caption/;
     # write the output to index.html
     $output-file.IO.spurt($template);
-    say "Generated 'index.html' successfully at: $output-file";
+    say "Generated '$output-file'";
     return $filecount;
 }
 
