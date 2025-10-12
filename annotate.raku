@@ -139,7 +139,11 @@ sub index( :$directory, :$subdir = 0 ) {
     my $linkup = "<h3><a href='../index.html'>../</a></h3>";
     $template ~~ s/'<!-- SUBDIR -->'/$linkup/ if $subdir;
     $template ~~ s/'<!-- CONTENT -->'/$content/;
-    $title = $directory unless $title;
+    my $dirname;
+    if $directory ~~ m| '/'? ( <-[/]>+ ) $ | {
+        $dirname = $0;  # everything after the last slash
+    }
+    $title = $dirname unless $title;
     $template ~~ s:g/'<!-- TITLE -->'/$title/;
     my $now = DateTime.now;
     $now = sprintf '%04d-%02d-%02d %02d:%02d',
