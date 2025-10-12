@@ -77,28 +77,36 @@ sub index( :$directory, :$subdir = 0 ) {
         elsif $file.f {  # normal file processing
             $filecount++;
             my $num; my $name;
-            # look for files in series like: Fire_01.jpeg
-            if $file.basename ~~ /(.+?)(\d+)?\..+$/ {
-                # note that our captured values are actually match objects
-                # that need to be braced to strings like {$name} and {$num}
-                # for interpolation below
-                $name = $/[0] // 'None';
-                $name = $name.subst("_", " ", :g);
-                if $/[1] { 
-                    $series++;
-                    $num = $/[1];
-                    # reset series for first file so name displays
-                    # or reset if we have a new file from new series
-                    if $filecount == 1 || ($previous_name && $previous_name ne $name) {
-                        $series = 0;  # reset
+            # assumption: files starting with a letter may have been manually named
+            # unless IMG* or image*
+            if ( not $file.basename ~~ /^(IMG|image)/ ) && $file.basename ~~ /^<[A..Za..z]>/ {
+                # look for intentionally named files in series like: Fire_01.jpeg
+                if $file.basename ~~ /(.+?)(\d+)?\..+$/ {
+                    # note that our captured values are actually match objects
+                    # that need to be braced to strings like {$name} and {$num}
+                    # for interpolation below
+                    $name = $/[0] // 'None';
+                    $name = $name.subst("_", " ", :g);
+                    if $/[1] { 
+                        $series++;
+                        $num = $/[1];
+                        # reset series for first file so name displays
+                        # or reset if we have a new file from new series
+                        if $filecount == 1 || ($previous_name && $previous_name ne $name) {
+                            $series = 0;  # reset
+                        }
+                    }
+                    else {
+                        $series = 0;  # reset, as it's not a series file
                     }
                 }
                 else {
-                    $series = 0;  # reset, as it's not a series file
+                    say "ERROR: file should match regex";
                 }
             }
-            else {
-                say "ERROR: file should match regex";
+            else { # files not starting with a letter, prob not manually named
+                # so process as non-series and show filename exactly
+                $name = $file.basename;
             }
             if $series > 0 {
                 $content ~= "&nbsp; - <a href='#' onClick=\"showImg('{$file.basename}');\">{$num}</a> ";
@@ -131,6 +139,7 @@ sub index( :$directory, :$subdir = 0 ) {
     my $linkup = "<h3><a href='../index.html'>../</a></h3>";
     $template ~~ s/'<!-- SUBDIR -->'/$linkup/ if $subdir;
     $template ~~ s/'<!-- CONTENT -->'/$content/;
+    $title = $directory unless $title;
     $template ~~ s:g/'<!-- TITLE -->'/$title/;
     my $now = DateTime.now;
     $now = sprintf '%04d-%02d-%02d %02d:%02d',
