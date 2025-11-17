@@ -109,18 +109,14 @@ sub index( :$directory, :$subdir = 0 ) {
                 $name = $file.basename;
             }
             if $series > 0 {
-                $content ~= "&nbsp; - <a href='#' onClick=\"showImg('{$file.basename}');\">{$num}</a> ";
+                $content ~= qq|&nbsp; - <a href="#" data-filename="{$file.basename}" onClick="showImg(this.dataset.filename);">{$num}</a> |;
             }
             else {
                 if %notes{$file.basename}:exists {
-                    # escape single quotes for JavaScript
-                    # and convert any double into escaped singles
-                    my $notes = %notes{$file.basename}.subst("'", "\\'", :g).subst('"', "\\'", :g);
-                    
-                    $content ~= "<li><a href='#' onClick=\"showImg('{$file.basename}', '$notes');\">{$name}</a>: { %notes{ $file.basename } }";
+                    $content ~= qq|<li><a href="#" data-filename="{$file.basename}" data-notes="{ %notes{ $file.basename } }" onClick="showImg(this.dataset.filename, this.dataset.notes);">{$name}</a>: { %notes{ $file.basename } }|;
                 }
                 else {
-                    $content ~= "<li><a href='#' onClick=\"showImg('{$file.basename}');\">{$name}</a>";
+                    $content ~= qq|<li><a href="#" data-filename="{$file.basename}" onClick="showImg(this.dataset.filename);">{$name}</a>|;
                 }
             }
             $content ~= "</li>\n" if $series == 0;
