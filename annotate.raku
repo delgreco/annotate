@@ -113,6 +113,7 @@ sub index( :$directory, :$subdir = 0 ) {
             }
             else {
                 if %notes{$file.basename}:exists {
+                    %notes{$file.basename} = %notes{$file.basename}.Str.subst('"', '&quot;', :g);
                     $content ~= qq|<li><a href="#" data-filename="{$file.basename}" data-notes="{ %notes{ $file.basename } }" onClick="showImg(this.dataset.filename, this.dataset.notes);">{$name}</a>: { %notes{ $file.basename } }|;
                 }
                 else {
