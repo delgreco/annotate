@@ -63,7 +63,7 @@ sub index( :$directory, :$subdir = 0 ) {
     my $filecount = 0; my $totalsubfiles = 0;
     my $series = 0;
     my $previous_name = ''; my $subdirs;
-    for $directory.IO.dir.sort -> $file {
+    for $directory.IO.dir.sort(*.basename.lc) -> $file {
         # skip Annotations.txt or .Annotations.txt.swp
         next if $file.basename ~~ / ^ \.?Annotations\.txt.* $ /;
         next if $file.basename eq '.DS_Store';
