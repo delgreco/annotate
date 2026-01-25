@@ -158,6 +158,7 @@ sub index( :$directory, :$subdir = 0 ) {
         .grep(*.IO.f)                     # only files
         .grep({ $_.extension ne 'txt' })  # exclude .txt file
         .grep({ $_.extension ne 'html' }) # exclude .html file
+        .grep({ $_.extension ne 'swp' })  # exclude .swp file
         .map(*.basename);                 # get the filenames
     my $randomimg = @images.pick;
     $template ~~ s:g/'<!-- RANDOM_IMAGE -->'/$randomimg/;
