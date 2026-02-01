@@ -150,9 +150,14 @@ sub index( :$directory, :$subdir = 0 ) {
     $now.hour,
     $now.minute;
     $template ~~ s:g/'<!-- DATETIME -->'/$now/;
-    $template ~~ s:g/'<!-- COUNT -->'/$filecount/;
     my $total = $totalsubfiles + $filecount;
-    $template ~~ s:g/'<!-- TOTAL -->'/($total total)/ if $total != $filecount;
+    if $total != $filecount {
+        $template ~~ s:g/'<!-- TOTAL -->'/($total total)/ if $total != $filecount;
+        $template ~~ s:g/'<!-- COUNT -->'/($filecount this page)/ if $total != $filecount;
+    }
+    else {
+        $template ~~ s:g/'<!-- COUNT -->'/($filecount)/;
+    }
     # pick a random image to display for spice
     my @images = $directory.IO.dir
         .grep(*.IO.f)                     # only files
