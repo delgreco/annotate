@@ -1,5 +1,16 @@
 #!/usr/bin/env raku
 
+=begin pod
+=head1 annotate.raku
+
+Annotate files where they live, and create a browsable archive.
+
+=head2 MAIN( $dir )
+
+Accept a directory to index.  If no --dir=[dir] is passed, prompt for one.
+
+=end pod
+
 sub MAIN(
     Str :$dir = '', # optional: --dir=[directory]
 ) {
@@ -21,13 +32,21 @@ sub MAIN(
     }
 }
 
+=begin pod
+
+=head2 index( $dir, $subdir )
+
+Index the directory given in the first arg, recursively.  If a true value is passed for the second arg, we know we are dealing with a subdirectory.
+
+=end pod
+
 sub index( :$directory, :$subdir = 0 ) {
     my $output-file = "$directory/index.html";
     my $annotations-file = "$directory/Annotations.txt";
     if $directory.IO.d {
         if ! $annotations-file.IO.f {
             say "The file 'Annotations.txt' does not exist in directory '$directory'.";
-            return;
+            # return;
         }
     } 
     else {
@@ -39,26 +58,27 @@ sub index( :$directory, :$subdir = 0 ) {
     my $content = ''; my $title = '';
     # load titles and notes
     my $count = 0;
-    for $annotations-file.IO.lines -> $line {
-        next if $line ~~ /^\s*$/;  # ignore blank lines
-        $count++;
-        if ( $count == 1 ) {
-            $title = $line;
-            next;
-        }
-        if $line ~~ / ^ (.*?) \: (.+) $ / {
-            my $filename = $0;
-            my $annotation = $1;
-            %notes{$filename} = $annotation;
-            if ! $filename || ! $annotation {
-                say "Invalid capture: $filename, $annotation";
+    if $annotations-file.IO.f {
+        for $annotations-file.IO.lines -> $line {
+            next if $line ~~ /^\s*$/;  # ignore blank lines
+            $count++;
+            if ( $count == 1 ) {
+                $title = $line;
+                next;
+            }
+            if $line ~~ / ^ (.*?) \: (.+) $ / {
+                my $filename = $0;
+                my $annotation = $1;
+                %notes{$filename} = $annotation;
+                if ! $filename || ! $annotation {
+                    say "Invalid capture: $filename, $annotation";
+                }
+            }
+            else {
+                say "Invalid format: $line";
             }
         }
-        else {
-            say "Invalid format: $line";
-        }
     }
-    #say %notes;
     # build index from all files in directory
     my $filecount = 0; my $totalsubfiles = 0;
     my $series = 0;
