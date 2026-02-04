@@ -180,11 +180,12 @@ sub index( :$directory, :$subdir = 0 ) {
     }
     # pick a random image to display for spice
     my @images = $directory.IO.dir
-        .grep(*.IO.f)                     # only files
-        .grep({ $_.extension ne 'txt' })  # exclude .txt file
-        .grep({ $_.extension ne 'html' }) # exclude .html file
-        .grep({ $_.extension ne 'swp' })  # exclude .swp file
-        .map(*.basename);                 # get the filenames
+        .grep(*.IO.f)                          # only files
+        .grep({ $_.extension ne 'txt' })       # exclude .txt file
+        .grep({ $_.extension ne 'DS_Store' })  # exclude .DS_Store file
+        .grep({ $_.extension ne 'html' })      # exclude .html file
+        .grep({ $_.extension ne 'swp' })       # exclude .swp file
+        .map(*.basename);                      # get the filenames
     my $randomimg = @images.pick;
     if $randomimg {
         $template ~~ s:g/'<!-- RANDOM_IMAGE -->'/$randomimg/ if $randomimg;
