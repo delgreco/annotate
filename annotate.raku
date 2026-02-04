@@ -186,9 +186,11 @@ sub index( :$directory, :$subdir = 0 ) {
         .grep({ $_.extension ne 'swp' })  # exclude .swp file
         .map(*.basename);                 # get the filenames
     my $randomimg = @images.pick;
-    $template ~~ s:g/'<!-- RANDOM_IMAGE -->'/$randomimg/;
-    my $caption = "$randomimg: { %notes{$randomimg} // '' }";
-    $template ~~ s:g/'<!-- RANDOM_IMAGE_CAPTION -->'/$caption/;
+    if $randomimg {
+        $template ~~ s:g/'<!-- RANDOM_IMAGE -->'/$randomimg/ if $randomimg;
+        my $caption = "$randomimg: { %notes{$randomimg} // '' }";
+        $template ~~ s:g/'<!-- RANDOM_IMAGE_CAPTION -->'/$caption/;
+    }
     # write the output to index.html
     $output-file.IO.spurt($template);
     say "Generated '$output-file'";
