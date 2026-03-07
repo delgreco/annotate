@@ -5,4 +5,8 @@
 .precomp
 lib/.precomp
 
+*DS_STORE
 *.swp
+*.jpg
+*.jpeg
+*.bk
