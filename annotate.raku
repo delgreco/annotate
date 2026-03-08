@@ -1,4 +1,6 @@
 #!/usr/bin/env raku
+use lib 'lib';
+use ExifTool;
 
 =begin pod
 =head1 annotate.raku
@@ -128,13 +130,29 @@ sub index( :$directory, :$subdir = 0 ) {
                 # so process as non-series and show filename exactly
                 $name = $file.basename;
             }
+
+            my $note = %notes{$file.basename} // '';
+            
+            # If no note in Annotations.txt, try to read XMP metadata
+            if ! $note && $file.extension.lc ~~ /^(jpe?g|png|tiff?|webp)$/ {
+                try {
+                    my %meta = read-metadata($file, 'XMP:Description');
+                    if %meta{'XMP:Description'} -> $xmp-note {
+                        $note = $xmp-note;
+                    }
+                    CATCH { default { } }
+                }
+            }
+            
+            # Escape quotes for data-notes attribute
+            my $escaped-note = $note.Str.subst('"', '&quot;', :g);
+
             if $series > 0 {
-                $content ~= qq|&nbsp; - <a href="#" data-filename="{$file.basename}" onClick="showImg(this.dataset.filename);">{$num}</a> |;
+                $content ~= qq|&nbsp; - <a href="#" data-filename="{$file.basename}" data-notes="{$escaped-note}" onClick="showImg(this.dataset.filename, this.dataset.notes);">{$num}</a> |;
             }
             else {
-                if %notes{$file.basename}:exists {
-                    %notes{$file.basename} = %notes{$file.basename}.Str.subst('"', '&quot;', :g);
-                    $content ~= qq|<li><a href="#" data-filename="{$file.basename}" data-notes="{ %notes{ $file.basename } }" onClick="showImg(this.dataset.filename, this.dataset.notes);">{$name}</a>: { %notes{ $file.basename } }|;
+                if $note {
+                    $content ~= qq|<li><a href="#" data-filename="{$file.basename}" data-notes="{$escaped-note}" onClick="showImg(this.dataset.filename, this.dataset.notes);">{$name}</a>: {$note}|;
                 }
                 else {
                     $content ~= qq|<li><a href="#" data-filename="{$file.basename}" onClick="showImg(this.dataset.filename);">{$name}</a>|;

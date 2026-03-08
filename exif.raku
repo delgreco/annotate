@@ -72,6 +72,6 @@ sub MAIN(*@args, *%named-args) {
 
 sub usage() {
     say "Usage:";
-    say "  test_exif.raku read <path> [<tags> ...]";
-    say "  test_exif.raku write <path> --TagName=Value [--OtherTag=Value]";
+    say "  exif.raku read <path> [<tags> ...]";
+    say "  exif.raku write <path> --TagName=Value [--OtherTag=Value]";
 }
