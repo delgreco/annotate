@@ -21,6 +21,12 @@ sub MAIN(*@args, *%named-args) {
     elsif $first.IO.f {
         interactive-mode($first.IO);
     }
+    elsif $first.IO.d {
+        my @image-extensions = <jpg jpeg png tiff tif webp heic>;
+        for $first.IO.dir.grep({ .f && .extension && .extension.lc ~~ any(@image-extensions) }).sort -> $file {
+            interactive-mode($file);
+        }
+    }
     else {
         usage();
     }
@@ -84,10 +90,20 @@ sub handle-write(@args, %named-args) {
 }
 
 sub interactive-mode(IO::Path $file) {
-    say "--- Interactive Metadata Tool ---";
+    say "\n" ~ ("-" x 40);
     say "File: {$file.basename}";
     
-    my %meta = read-metadata($file, 'XMP:Description');
+    my %meta;
+    try {
+        %meta = read-metadata($file, 'XMP:Description');
+        CATCH {
+            default {
+                note "Skipping {$file.basename}: Could not read metadata (is it an image?)";
+                return;
+            }
+        }
+    }
+    
     if %meta{'XMP:Description'} -> $desc {
         say "Current Description: $desc";
     }
@@ -95,7 +111,13 @@ sub interactive-mode(IO::Path $file) {
         say "Current Description: [None]";
     }
     
-    my $new-desc = prompt("Enter new description (leave blank to skip): ");
+    my $prompt-text = "Enter new description (blank to skip, 'q' to quit): ";
+    my $new-desc = prompt($prompt-text);
+    
+    if $new-desc eq 'q' {
+        say "Exiting.";
+        exit 0;
+    }
     
     if $new-desc.trim -> $val {
         say "Writing new description...";
@@ -116,7 +138,7 @@ sub interactive-mode(IO::Path $file) {
 
 sub usage() {
     say "Usage:";
-    say "  exif.raku <path>                        -- Interactive mode for an image";
+    say "  exif.raku <path>                        -- Interactive mode for image(s) or directory";
     say "  exif.raku read <path> [<tags> ...]      -- Read specific tags";
     say "  exif.raku write <path> --TagName=Value  -- Write specific tags";
     say "\nNote: For 'write', named arguments must come BEFORE 'write'.";
