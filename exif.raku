@@ -93,6 +93,24 @@ sub interactive-mode(IO::Path $file) {
     say "\n" ~ ("-" x 40);
     say "File: {$file.basename}";
     
+    # Open the image in the default viewer/browser cross-platform
+    my $opener = do given $*DISTRO.name {
+        when 'macos'   { 'open' }
+        when 'linux'   { 'xdg-open' }
+        when 'mswin32' { 'start' }
+        default        { Nil }
+    };
+    
+    if $opener {
+        if $*DISTRO.name eq 'mswin32' {
+            # Windows 'start' often needs to be run through a shell
+            shell "$opener \"\" \"$file\"";
+        }
+        else {
+            run $opener, $file.absolute;
+        }
+    }
+    
     my %meta;
     try {
         %meta = read-metadata($file, 'XMP:Description');
