@@ -44,53 +44,25 @@ Index the directory given in the first arg, recursively.  If a true value is pas
 
 sub index( :$directory, :$subdir = 0 ) {
     my $output-file = "$directory/index.html";
-    my $annotations-file = "$directory/Annotations.txt";
-    if $directory.IO.d {
-        if ! $annotations-file.IO.f {
-            say "The file 'Annotations.txt' does not exist in directory '$directory'.";
-            # return;
-        }
-    } 
-    else {
+    unless $directory.IO.d {
         say "The path you entered is not a directory or does not exist.";
         say "Path: {$directory.IO}";
         return;
     }
-    my %notes;
+    
     my $content = ''; my $title = '';
     # load titles and notes
     my $count = 0;
-    if $annotations-file.IO.f {
-        for $annotations-file.IO.lines -> $line {
-            next if $line ~~ /^\s*$/;  # ignore blank lines
-            $count++;
-            if ( $count == 1 ) {
-                $title = $line;
-                next;
-            }
-            if $line ~~ / ^ (.*?) \: (.+) $ / {
-                my $filename = $0;
-                my $annotation = $1;
-                %notes{$filename} = $annotation;
-                if ! $filename || ! $annotation {
-                    say "Invalid capture: $filename, $annotation";
-                }
-            }
-            else {
-                say "Invalid format: $line";
-            }
-        }
-    }
+    
     # build index from all files in directory
     my $filecount = 0; my $totalsubfiles = 0;
     my $series = 0;
     my $previous_name = ''; my $subdirs;
     for $directory.IO.dir.sort(*.basename.lc) -> $file {
-        # skip Annotations.txt or .Annotations.txt.swp
-        next if $file.basename ~~ / ^ \.?Annotations\.txt.* $ /;
+        # skip index.html and system files
         next if $file.basename eq '.DS_Store';
         next if $file.basename eq 'index.html';
-        # say "File object: {$file.^name}";
+        
         if $file.IO.d {  # subdirectory recursion
             my $count = index( :directory( "$directory/{$file.basename}" ), :subdir(1) );
             $totalsubfiles = $totalsubfiles + $count;
@@ -104,42 +76,31 @@ sub index( :$directory, :$subdir = 0 ) {
             if ( not $file.basename ~~ /^(IMG|image)/ ) && $file.basename ~~ /^<[A..Za..z]>/ {
                 # look for intentionally named files in series like: Fire_01.jpeg
                 if $file.basename ~~ /(.+?)(\d+)?\..+$/ {
-                    # note that our captured values are actually match objects
-                    # that need to be braced to strings like {$name} and {$num}
-                    # for interpolation below
                     $name = $/[0] // 'None';
                     $name = $name.subst("_", " ", :g);
                     if $/[1] { 
                         $series++;
                         $num = $/[1];
-                        # reset series for first file so name displays
-                        # or reset if we have a new file from new series
                         if $filecount == 1 || ($previous_name && $previous_name ne $name) {
                             $series = 0;  # reset
                         }
                     }
                     else {
-                        $series = 0;  # reset, as it's not a series file
+                        $series = 0;  # reset
                     }
                 }
-                else {
-                    say "ERROR: file should match regex";
-                }
             }
-            else { # files not starting with a letter, prob not manually named
-                # so process as non-series and show filename exactly
+            else { 
                 $name = $file.basename;
             }
 
-            my $note = %notes{$file.basename} // '';
+            my $note = '';
             
-            # If no note in Annotations.txt, try to read XMP metadata
-            if ! $note && $file.extension.lc ~~ /^(jpe?g|png|tiff?|webp)$/ {
+            # Read XMP metadata for images
+            if $file.extension.lc ~~ /^(jpe?g|png|tiff?|webp)$/ {
                 try {
                     my %meta = read-metadata($file, 'XMP:Description');
-                    if %meta{'XMP:Description'} -> $xmp-note {
-                        $note = $xmp-note;
-                    }
+                    $note = %meta{'XMP:Description'} // '';
                     CATCH { default { } }
                 }
             }
@@ -160,9 +121,6 @@ sub index( :$directory, :$subdir = 0 ) {
             }
             $content ~= "</li>\n" if $series == 0;
             $previous_name = $name;
-        }
-        else {
-            say "This is neither a directory nor a normal file: {$file.basename}";
         }
     }
     # read the template and replace the placeholder
@@ -198,16 +156,20 @@ sub index( :$directory, :$subdir = 0 ) {
     }
     # pick a random image to display for spice
     my @images = $directory.IO.dir
-        .grep(*.IO.f)                          # only files
-        .grep({ $_.extension ne 'txt' })       # exclude .txt file
-        .grep({ $_.extension ne 'DS_Store' })  # exclude .DS_Store file
-        .grep({ $_.extension ne 'html' })      # exclude .html file
-        .grep({ $_.extension ne 'swp' })       # exclude .swp file
-        .map(*.basename);                      # get the filenames
+        .grep(*.IO.f)
+        .grep({ $_.extension.lc ~~ /^(jpe?g|png|tiff?|webp)$/ })
+        .map(*.basename);
     my $randomimg = @images.pick;
     if $randomimg {
-        $template ~~ s:g/'<!-- RANDOM_IMAGE -->'/$randomimg/ if $randomimg;
-        my $caption = "$randomimg: { %notes{$randomimg} // '' }";
+        $template ~~ s:g/'<!-- RANDOM_IMAGE -->'/$randomimg/;
+        my $caption = $randomimg;
+        try {
+            my %meta = read-metadata("$directory/$randomimg".IO, 'XMP:Description');
+            if %meta{'XMP:Description'} -> $xmp-note {
+                $caption ~= ": $xmp-note";
+            }
+            CATCH { default { } }
+        }
         $template ~~ s:g/'<!-- RANDOM_IMAGE_CAPTION -->'/$caption/;
     }
     # write the output to index.html
