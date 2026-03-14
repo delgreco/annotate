@@ -59,9 +59,12 @@ sub index( :$directory, :$subdir = 0 ) {
     my $series = 0;
     my $previous_name = ''; my $subdirs;
     for $directory.IO.dir.sort(*.basename.lc) -> $file {
-        # skip index.html and system files
+        # skip unwanted files
         next if $file.basename eq '.DS_Store';
         next if $file.basename eq 'index.html';
+        next if $file.basename.starts-with('.');
+        next if $file.basename.starts-with('.bk');
+        next if $file.basename eq 'lib' || $file.basename eq '.git';
         
         if $file.IO.d {  # subdirectory recursion
             my $count = index( :directory( "$directory/{$file.basename}" ), :subdir(1) );
@@ -75,12 +78,12 @@ sub index( :$directory, :$subdir = 0 ) {
             # unless IMG* or image*
             if ( not $file.basename ~~ /^(IMG|image)/ ) && $file.basename ~~ /^<[A..Za..z]>/ {
                 # look for intentionally named files in series like: Fire_01.jpeg
-                if $file.basename ~~ /(.+?)(\d+)?\..+$/ {
-                    $name = $/[0] // 'None';
-                    $name = $name.subst("_", " ", :g);
+                if $file.basename ~~ /(.+?)[_ ]?(\d+)?\..+$/ {
+                    $name = $/[0].Str;
+                    $name = $name.subst("_", " ", :g).trim;
                     if $/[1] { 
                         $series++;
-                        $num = $/[1];
+                        $num = $/[1].Str;
                         if $filecount == 1 || ($previous_name && $previous_name ne $name) {
                             $series = 0;  # reset
                         }
@@ -112,6 +115,7 @@ sub index( :$directory, :$subdir = 0 ) {
                 $content ~= qq|&nbsp; - <a href="#" data-filename="{$file.basename}" data-notes="{$escaped-note}" onClick="showImg(this.dataset.filename, this.dataset.notes);">{$num}</a> |;
             }
             else {
+                $content ~= "</li>\n" if $previous_name; # close previous
                 if $note {
                     $content ~= qq|<li><a href="#" data-filename="{$file.basename}" data-notes="{$escaped-note}" onClick="showImg(this.dataset.filename, this.dataset.notes);">{$name}</a>: {$note}|;
                 }
@@ -119,18 +123,29 @@ sub index( :$directory, :$subdir = 0 ) {
                     $content ~= qq|<li><a href="#" data-filename="{$file.basename}" onClick="showImg(this.dataset.filename);">{$name}</a>|;
                 }
             }
-            $content ~= "</li>\n" if $series == 0;
             $previous_name = $name;
         }
     }
+    $content ~= "</li>\n" if $filecount; # close last one
+
     # read the template and replace the placeholder
     my $template-file = 'index.tmpl';
     my $template = $template-file.IO.slurp;
     # if we *have* subdirectories
-    $template ~~ s/'<!-- SUBDIRS -->'/$subdirs/ if $subdirs;
+    if $subdirs {
+        $template ~~ s/'<!-- SUBDIRS -->'/$subdirs/;
+    }
+    else {
+        $template ~~ s/'<!-- SUBDIRS -->'//;
+    }
     # if we *are* a subdirectory
     my $linkup = "<h3><a href='../index.html'>../</a></h3>";
-    $template ~~ s/'<!-- SUBDIR -->'/$linkup/ if $subdir;
+    if $subdir {
+        $template ~~ s/'<!-- SUBDIR -->'/$linkup/;
+    }
+    else {
+        $template ~~ s/'<!-- SUBDIR -->'//;
+    }
     $template ~~ s/'<!-- CONTENT -->'/$content/;
     my $dirname;
     if $directory ~~ m| '/'? ( <-[/]>+ ) $ | {
@@ -148,11 +163,12 @@ sub index( :$directory, :$subdir = 0 ) {
     $template ~~ s:g/'<!-- DATETIME -->'/$now/;
     my $total = $totalsubfiles + $filecount;
     if $total != $filecount {
-        $template ~~ s:g/'<!-- TOTAL -->'/($total total)/ if $total != $filecount;
-        $template ~~ s:g/'<!-- COUNT -->'/($filecount this page)/ if $total != $filecount;
+        $template ~~ s:g/'<!-- TOTAL -->'/($total total)/;
+        $template ~~ s:g/'<!-- COUNT -->'/($filecount this page)/;
     }
     else {
         $template ~~ s:g/'<!-- COUNT -->'/($filecount)/;
+        $template ~~ s:g/'<!-- TOTAL -->'//;
     }
     # pick a random image to display for spice
     my @images = $directory.IO.dir
@@ -172,10 +188,14 @@ sub index( :$directory, :$subdir = 0 ) {
         }
         $template ~~ s:g/'<!-- RANDOM_IMAGE_CAPTION -->'/$caption/;
     }
+    else {
+        $template ~~ s:g/'<!-- RANDOM_IMAGE -->'//;
+        $template ~~ s:g/'<!-- RANDOM_IMAGE_CAPTION -->'//;
+    }
     # write the output to index.html
     $output-file.IO.spurt($template);
     say "Generated '$output-file'";
-    return $filecount;
+    return $total;
 }
 
 
