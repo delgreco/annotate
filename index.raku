@@ -153,13 +153,14 @@ sub index( :$directory, :$subdir = 0 ) {
     $title = $dirname unless $title;
     $template ~~ s:g/'<!-- TITLE -->'/$title/;
     my $now = DateTime.now;
-    $now = sprintf '%04d-%02d-%02d %02d:%02d',
-    $now.year,
-    $now.month,
-    $now.day,
-    $now.hour,
-    $now.minute;
-    $template ~~ s:g/'<!-- DATETIME -->'/$now/;
+    my @months = <None January February March April May June July August September October November December>;
+    my @days   = <None Monday Tuesday Wednesday Thursday Friday Saturday Sunday>;
+    my $h      = $now.hour;
+    my $ampm   = $h >= 12 ?? 'PM' !! 'AM';
+    $h = $h % 12 || 12;
+    my $dt-str = sprintf '%s, %s %d, %04d at %d:%02d %s',
+        @days[$now.day-of-week], @months[$now.month], $now.day, $now.year, $h, $now.minute, $ampm;
+    $template ~~ s:g/'<!-- DATETIME -->'/$dt-str/;
     my $total = $totalsubfiles + $filecount;
     if $total != $filecount {
         $template ~~ s:g/'<!-- TOTAL -->'/($total total)/;
