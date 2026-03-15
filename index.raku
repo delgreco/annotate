@@ -130,6 +130,11 @@ sub index( :$directory, :$subdir = 0 ) {
     # read the template and replace the placeholder
     my $template-file = 'index.tmpl';
     my $template = $template-file.IO.slurp;
+
+    # Load archive header from ARCHIVE_HEADER file in script directory
+    my $header-file = $*PROGRAM.parent.add('ARCHIVE_HEADER');
+    my $archive-header = $header-file.f ?? $header-file.slurp.trim !! 'The Archive';
+    $template ~~ s/'<!-- ARCHIVE_HEADER -->'/$archive-header/;
     # if we *have* subdirectories
     if $subdirs {
         $template ~~ s/'<!-- SUBDIRS -->'/$subdirs/;
