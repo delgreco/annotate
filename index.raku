@@ -58,20 +58,21 @@ sub index( :$directory, :$subdir = 0 ) {
     my $filecount = 0; my $totalsubfiles = 0;
     my $series = 0;
     my $previous_name = ''; my $subdirs;
+    my $image-ext = /:i jpe?g | png | tiff? | webp /;
+
     for $directory.IO.dir.sort(*.basename.lc) -> $file {
-        # skip unwanted files
-        next if $file.basename eq '.DS_Store';
-        next if $file.basename eq 'index.html';
-        next if $file.basename.starts-with('.');
-        next if $file.basename.starts-with('.bk');
-        next if $file.basename eq 'lib' || $file.basename eq '.git';
-        
         if $file.IO.d {  # subdirectory recursion
+            next if $file.basename.starts-with('.');
+            next if $file.basename eq 'lib' || $file.basename eq '.git';
+            
             my $count = index( :directory( "$directory/{$file.basename}" ), :subdir(1) );
             $totalsubfiles = $totalsubfiles + $count;
             $subdirs ~= "<li><a href='{$file.basename}/index.html'> 📁 {$file.basename} ($count)</a></li>\n";
         }
         elsif $file.f {  # normal file processing
+            # Whitelist images that support XMP metadata
+            next unless $file.extension ~~ $image-ext;
+
             $filecount++;
             my $num; my $name;
             # assumption: files starting with a letter may have been manually named
@@ -99,13 +100,11 @@ sub index( :$directory, :$subdir = 0 ) {
 
             my $note = '';
             
-            # Read XMP metadata for images
-            if $file.extension.lc ~~ /^(jpe?g|png|tiff?|webp)$/ {
-                try {
-                    my %meta = read-metadata($file, 'XMP:Description');
-                    $note = %meta{'XMP:Description'} // '';
-                    CATCH { default { } }
-                }
+            # Read XMP metadata
+            try {
+                my %meta = read-metadata($file, 'XMP:Description');
+                $note = %meta{'XMP:Description'} // '';
+                CATCH { default { } }
             }
             
             # Escape quotes for data-notes attribute
