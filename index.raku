@@ -111,21 +111,26 @@ sub index( :$directory, :$subdir = 0 ) {
             my $escaped-note = $note.Str.subst('"', '&quot;', :g);
 
             if $series > 0 {
-                $content ~= qq|&nbsp; - <a href="#" data-filename="{$file.basename}" data-notes="{$escaped-note}" onClick="showImg(this.dataset.filename, this.dataset.notes);">{$num}</a> |;
+                $content ~= qq|<li>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" data-filename="{$file.basename}" data-notes="{$escaped-note}" onClick="showImg(this.dataset.filename, this.dataset.notes);">{$name} {$num}</a>|;
+                if $note {
+                    $content ~= ": {$note}";
+                }
+                $content ~= "</li>\n";
             }
             else {
-                $content ~= "</li>\n" if $previous_name; # close previous
+                # We don't need to close previous here if we always close at the end of each iteration
+                # but the current logic is: if series, it's a sub-item.
                 if $note {
-                    $content ~= qq|<li><a href="#" data-filename="{$file.basename}" data-notes="{$escaped-note}" onClick="showImg(this.dataset.filename, this.dataset.notes);">{$name}</a>: {$note}|;
+                    $content ~= qq|<li><a href="#" data-filename="{$file.basename}" data-notes="{$escaped-note}" onClick="showImg(this.dataset.filename, this.dataset.notes);">{$name}</a>: {$note}</li>\n|;
                 }
                 else {
-                    $content ~= qq|<li><a href="#" data-filename="{$file.basename}" onClick="showImg(this.dataset.filename);">{$name}</a>|;
+                    $content ~= qq|<li><a href="#" data-filename="{$file.basename}" onClick="showImg(this.dataset.filename);">{$name}</a></li>\n|;
                 }
             }
             $previous_name = $name;
         }
     }
-    $content ~= "</li>\n" if $filecount; # close last one
+    # Remove the extra </li>\n if it was there
 
     # read the template and replace the placeholder
     my $template-file = 'index.tmpl';
