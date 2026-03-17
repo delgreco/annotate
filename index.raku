@@ -184,7 +184,23 @@ sub index( :$directory, :$subdir = 0 ) {
     my @images = $directory.IO.dir
         .grep(*.IO.f)
         .grep({ $_.extension.lc ~~ /^(jpe?g|png|tiff?|webp)$/ })
-        .map(*.basename);
+        .map(*.basename).sort;
+
+    my @json_entries;
+    for @images -> $img {
+        my $cap = $img;
+        try {
+            my %meta = read-metadata("$directory/$img".IO, 'XMP:Description');
+            if %meta{'XMP:Description'} -> $xmp-note {
+                $cap ~= ": $xmp-note";
+            }
+            CATCH { default { } }
+        }
+        my $escaped_cap = $cap.subst('"', '\\"', :g);
+        @json_entries.push: qq|\{ "filename": "$img", "caption": "$escaped_cap" \}|;
+    }
+    $template ~~ s/'<!-- IMAGES_JSON -->'/{ @json_entries.join(', ') }/;
+
     my $randomimg = @images.pick;
     if $randomimg {
         $template ~~ s:g/'<!-- RANDOM_IMAGE -->'/$randomimg/;
