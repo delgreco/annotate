@@ -39,6 +39,7 @@
 
 let images = [ <!-- IMAGES_JSON --> ];
 let currentIndex = 0;
+let isPaused = false;
 
 function showImg(filename, notes) {
     const image = document.getElementById('img');
@@ -58,6 +59,7 @@ function startSlideshow() {
     if (images.length <= 1) return;
     
     setInterval(() => {
+        if (isPaused) return;
         currentIndex = (currentIndex + 1) % images.length;
         const nextImg = images[currentIndex];
         const imgElement = document.getElementById('img');
@@ -84,7 +86,7 @@ window.onload = startSlideshow;
 </head>
 <body>
 
-<div style="float: right; width: 50%; text-align: right;">
+<div style="float: right; width: 50%; text-align: right;" onmouseenter="isPaused = true" onmouseleave="isPaused = false">
     <figure id="random_img" style="text-align: center;">
     <a id="img_link" target="_blank" href="<!-- RANDOM_IMAGE -->"><img id="img" src="<!-- RANDOM_IMAGE -->" style="max-width: 100%; opacity: 1;"></a><br>
     <figcaption id="caption"><!-- RANDOM_IMAGE_CAPTION --></figcaption>
