@@ -59,22 +59,21 @@ function showImg(filename, notes) {
 function toggleSlideshow() {
     isSlideshowEnabled = !isSlideshowEnabled;
     localStorage.setItem('slideshowEnabled', isSlideshowEnabled);
-    updateSlideshowButton();
+    updateSlideshowUI();
 }
 
-function updateSlideshowButton() {
-    const btn = document.getElementById('slideshow_btn');
-    if (btn) {
-        btn.textContent = isSlideshowEnabled ? 'Stop Slideshow' : 'Start Slideshow';
+function updateSlideshowUI() {
+    const cb = document.getElementById('slideshow_toggle');
+    if (cb) {
+        cb.checked = isSlideshowEnabled;
     }
 }
 
 function startSlideshow() {
-    updateSlideshowButton();
+    updateSlideshowUI();
     if (images.length <= 1) {
-        if (document.getElementById('slideshow_btn')) {
-            document.getElementById('slideshow_btn').style.display = 'none';
-        }
+        const ctrl = document.getElementById('slideshow_control');
+        if (ctrl) ctrl.style.display = 'none';
         return;
     }
     
@@ -111,7 +110,6 @@ window.onload = startSlideshow;
     <a id="img_link" target="_blank" href="<!-- RANDOM_IMAGE -->"><img id="img" src="<!-- RANDOM_IMAGE -->" style="max-width: 100%; opacity: 1;"></a><br>
     <figcaption id="caption"><!-- RANDOM_IMAGE_CAPTION --></figcaption>
     </figure>
-    <button id="slideshow_btn" onClick="toggleSlideshow();" style="margin-top: 10px; padding: 5px 10px; cursor: pointer;"></button>
 </div>
 <div style="float: left; width: 50%;">
 
