@@ -40,6 +40,7 @@
 let images = [ <!-- IMAGES_JSON --> ];
 let currentIndex = 0;
 let isPaused = false;
+let isSlideshowEnabled = localStorage.getItem('slideshowEnabled') !== 'false';
 
 function showImg(filename, notes) {
     const image = document.getElementById('img');
@@ -55,11 +56,30 @@ function showImg(filename, notes) {
     }
 }
 
+function toggleSlideshow() {
+    isSlideshowEnabled = !isSlideshowEnabled;
+    localStorage.setItem('slideshowEnabled', isSlideshowEnabled);
+    updateSlideshowButton();
+}
+
+function updateSlideshowButton() {
+    const btn = document.getElementById('slideshow_btn');
+    if (btn) {
+        btn.textContent = isSlideshowEnabled ? 'Stop Slideshow' : 'Start Slideshow';
+    }
+}
+
 function startSlideshow() {
-    if (images.length <= 1) return;
+    updateSlideshowButton();
+    if (images.length <= 1) {
+        if (document.getElementById('slideshow_btn')) {
+            document.getElementById('slideshow_btn').style.display = 'none';
+        }
+        return;
+    }
     
     setInterval(() => {
-        if (isPaused) return;
+        if (!isSlideshowEnabled || isPaused) return;
         currentIndex = (currentIndex + 1) % images.length;
         const nextImg = images[currentIndex];
         const imgElement = document.getElementById('img');
@@ -91,11 +111,15 @@ window.onload = startSlideshow;
     <a id="img_link" target="_blank" href="<!-- RANDOM_IMAGE -->"><img id="img" src="<!-- RANDOM_IMAGE -->" style="max-width: 100%; opacity: 1;"></a><br>
     <figcaption id="caption"><!-- RANDOM_IMAGE_CAPTION --></figcaption>
     </figure>
+    <button id="slideshow_btn" onClick="toggleSlideshow();" style="margin-top: 10px; padding: 5px 10px; cursor: pointer;"></button>
 </div>
 <div style="float: left; width: 50%;">
 
     <h1><!-- ARCHIVE_HEADER --></h1>
     <h2><!-- TITLE --> <!-- COUNT --> <!-- TOTAL --></h2>
+    <div id="slideshow_control" style="margin-bottom: 10px; font-size: 0.9em; color: #666;">
+        <input type="checkbox" id="slideshow_toggle" onClick="toggleSlideshow();" style="vertical-align: middle; cursor: pointer;"> <label for="slideshow_toggle">Slideshow</label>
+    </div>
     <h3>last generated <!-- DATETIME --></h3>
     <!-- SUBDIR -->
 
