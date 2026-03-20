@@ -54,6 +54,11 @@ function showImg(filename, notes) {
     else {
         captionElement.textContent = filename;
     }
+
+    // Turn off slideshow when a specific image is clicked
+    if (isSlideshowEnabled) {
+        toggleSlideshow();
+    }
 }
 
 function toggleSlideshow() {
