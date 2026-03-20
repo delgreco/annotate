@@ -40,7 +40,7 @@
 let images = [ <!-- IMAGES_JSON --> ];
 let currentIndex = 0;
 let isPaused = false;
-let isSlideshowEnabled = localStorage.getItem('slideshowEnabled') !== 'false';
+let isSlideshowEnabled = true;
 
 function showImg(filename, notes) {
     const image = document.getElementById('img');
@@ -63,7 +63,6 @@ function showImg(filename, notes) {
 
 function toggleSlideshow() {
     isSlideshowEnabled = !isSlideshowEnabled;
-    localStorage.setItem('slideshowEnabled', isSlideshowEnabled);
     updateSlideshowUI();
 }
 
