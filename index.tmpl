@@ -33,14 +33,46 @@
     a:hover {
         text-decoration: underline;
     }
+    .highlight {
+        background-color: #FFFFCC;
+        font-weight: bold;
+        padding: 2px;
+        border-radius: 3px;
+    }
 </style>
 
 <script>
 
 let images = [ <!-- IMAGES_JSON --> ];
 let currentIndex = 0;
+let previousIndex = -1;
 let isPaused = false;
 let isSlideshowEnabled = true;
+
+function updateHighlights() {
+    // Remove all highlights first
+    document.querySelectorAll('a[data-filename]').forEach(a => {
+        a.classList.remove('highlight');
+    });
+
+    // Highlight current
+    if (currentIndex >= 0 && currentIndex < images.length) {
+        const currentImg = images[currentIndex];
+        const currentLink = document.querySelector(`a[data-filename="${currentImg.filename}"]`);
+        if (currentLink) {
+            currentLink.classList.add('highlight');
+        }
+    }
+
+    // Highlight previous
+    if (previousIndex >= 0 && previousIndex < images.length) {
+        const prevImg = images[previousIndex];
+        const prevLink = document.querySelector(`a[data-filename="${prevImg.filename}"]`);
+        if (prevLink) {
+            prevLink.classList.add('highlight');
+        }
+    }
+}
 
 function showImg(filename, notes) {
     const image = document.getElementById('img');
@@ -54,6 +86,11 @@ function showImg(filename, notes) {
     else {
         captionElement.textContent = filename;
     }
+
+    // Update currentIndex and previousIndex when manually selecting an image
+    previousIndex = currentIndex;
+    currentIndex = images.findIndex(img => img.filename === filename);
+    updateHighlights();
 
     // Turn off slideshow when a specific image is clicked
     if (isSlideshowEnabled) {
@@ -75,6 +112,16 @@ function updateSlideshowUI() {
 
 function startSlideshow() {
     updateSlideshowUI();
+    
+    // Set initial currentIndex based on the random image shown
+    const initialImg = document.getElementById('img');
+    if (initialImg) {
+        const src = initialImg.getAttribute('src');
+        currentIndex = images.findIndex(img => img.filename === src);
+        if (currentIndex === -1) currentIndex = 0;
+        updateHighlights();
+    }
+
     if (images.length <= 1) {
         const ctrl = document.getElementById('slideshow_control');
         if (ctrl) ctrl.style.display = 'none';
@@ -83,6 +130,8 @@ function startSlideshow() {
     
     setInterval(() => {
         if (!isSlideshowEnabled || isPaused) return;
+        
+        previousIndex = currentIndex;
         currentIndex = (currentIndex + 1) % images.length;
         const nextImg = images[currentIndex];
         const imgElement = document.getElementById('img');
@@ -98,6 +147,7 @@ function startSlideshow() {
             imgLink.href = nextImg.filename;
             captionElement.textContent = nextImg.caption;
             imgElement.style.opacity = 1;
+            updateHighlights();
         }, 1000);
     }, 30000); // 30 seconds
 }
