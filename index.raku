@@ -148,7 +148,7 @@ sub index( :$directory, :$subdir = 0 ) {
         $template ~~ s/'<!-- SUBDIRS -->'//;
     }
     # if we *are* a subdirectory
-    my $linkup = "<h3><a href='../index.html'>../</a></h3>";
+    my $linkup = "<h3 style='margin: 0;'><a href='../index.html'>../</a></h3>";
     if $subdir {
         $template ~~ s/'<!-- SUBDIR -->'/$linkup/;
     }

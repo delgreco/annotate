@@ -119,10 +119,14 @@ window.onload = startSlideshow;
 
     <h1><!-- ARCHIVE_HEADER --></h1>
     <h2><!-- TITLE --> <!-- COUNT --> <!-- TOTAL --></h2>
-    <div id="slideshow_control" style="margin-bottom: 10px; font-size: 0.9em; color: #666;">
-        <input type="checkbox" id="slideshow_toggle" onClick="toggleSlideshow();" style="vertical-align: middle; cursor: pointer;"> <label for="slideshow_toggle">Slideshow</label>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+        <div style="flex-grow: 1;">
+            <!-- SUBDIR -->
+        </div>
+        <div id="slideshow_control" style="font-size: 0.9em; color: #666; white-space: nowrap;">
+            <input type="checkbox" id="slideshow_toggle" onClick="toggleSlideshow();" style="vertical-align: middle; cursor: pointer;"> <label for="slideshow_toggle">Slideshow</label>
+        </div>
     </div>
-    <!-- SUBDIR -->
 
     <div style="height: 80vh; overflow-y: auto; border: 1px solid #ccc; padding: 8px;">
         <ul>
