@@ -55,24 +55,48 @@ function updateHighlights() {
         a.classList.remove('highlight');
     });
 
-    // Highlight current
-    if (currentIndex >= 0 && currentIndex < images.length) {
-        const currentImg = images[currentIndex];
-        const currentLink = document.querySelector(`a[data-filename="${currentImg.filename}"]`);
-        if (currentLink) {
-            currentLink.classList.add('highlight');
+    const markersContainer = document.getElementById('scrollbar_markers');
+    const scrollContainer = document.getElementById('scroll_container');
+    if (markersContainer) markersContainer.innerHTML = '';
+
+    const addMarker = (index, isCurrent) => {
+        if (index >= 0 && index < images.length) {
+            const img = images[index];
+            const link = document.querySelector(`a[data-filename="${img.filename}"]`);
+            if (link) {
+                link.classList.add('highlight');
+                if (markersContainer && scrollContainer) {
+                    const rect = scrollContainer.getBoundingClientRect();
+                    const linkRect = link.getBoundingClientRect();
+                    const containerTop = scrollContainer.scrollTop;
+                    const relativeTop = link.offsetTop;
+                    const totalHeight = scrollContainer.scrollHeight;
+                    const markerTopPercent = (relativeTop / totalHeight) * 100;
+                    
+                    const marker = document.createElement('div');
+                    marker.style.position = 'absolute';
+                    marker.style.top = markerTopPercent + '%';
+                    marker.style.right = '0';
+                    marker.style.width = '100%';
+                    marker.style.height = '4px';
+                    marker.style.backgroundColor = isCurrent ? '#FFD700' : '#FFFFCC'; // Bright yellow for current, pale for previous
+                    marker.style.border = '1px solid #999';
+                    marker.style.borderRadius = '2px';
+                    marker.style.zIndex = '1000';
+                    markersContainer.appendChild(marker);
+                }
+            }
         }
-    }
+    };
+
+    // Highlight current
+    addMarker(currentIndex, true);
 
     // Highlight previous
-    if (previousIndex >= 0 && previousIndex < images.length) {
-        const prevImg = images[previousIndex];
-        const prevLink = document.querySelector(`a[data-filename="${prevImg.filename}"]`);
-        if (prevLink) {
-            prevLink.classList.add('highlight');
-        }
-    }
+    addMarker(previousIndex, false);
 }
+
+window.onresize = updateHighlights;
 
 function showImg(filename, notes) {
     const image = document.getElementById('img');
@@ -189,14 +213,17 @@ window.onload = startSlideshow;
         </div>
     </div>
 
-    <div style="height: 80vh; overflow-y: auto; border: 1px solid #ccc; padding: 8px;">
-        <ul>
-            <!-- SUBDIRS -->
-        </ul>
+    <div style="position: relative;">
+        <div id="scroll_container" style="height: 80vh; overflow-y: auto; border: 1px solid #ccc; padding: 8px;">
+            <ul>
+                <!-- SUBDIRS -->
+            </ul>
 
-        <ul>
-            <!-- CONTENT -->
-        </ul>
+            <ul>
+                <!-- CONTENT -->
+            </ul>
+        </div>
+        <div id="scrollbar_markers" style="position: absolute; right: 0; top: 0; bottom: 0; width: 12px; pointer-events: none; background: rgba(0,0,0,0.05); border-left: 1px solid #eee;"></div>
     </div>
 
 
