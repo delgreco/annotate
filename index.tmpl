@@ -132,7 +132,18 @@ function startSlideshow() {
         if (!isSlideshowEnabled || isPaused) return;
         
         previousIndex = currentIndex;
-        currentIndex = (currentIndex + 1) % images.length;
+        
+        // Select a random image, but try to avoid picking the same one twice in a row
+        let nextIndex;
+        if (images.length > 1) {
+            do {
+                nextIndex = Math.floor(Math.random() * images.length);
+            } while (nextIndex === currentIndex);
+        } else {
+            nextIndex = 0;
+        }
+        
+        currentIndex = nextIndex;
         const nextImg = images[currentIndex];
         const imgElement = document.getElementById('img');
         const imgLink = document.getElementById('img_link');
