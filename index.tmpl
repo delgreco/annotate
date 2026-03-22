@@ -65,6 +65,9 @@ function updateHighlights() {
             const link = document.querySelector(`a[data-filename="${img.filename}"]`);
             if (link) {
                 link.classList.add('highlight');
+                if (isCurrent) {
+                    link.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                }
                 if (markersContainer && scrollContainer) {
                     const rect = scrollContainer.getBoundingClientRect();
                     const linkRect = link.getBoundingClientRect();
