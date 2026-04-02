@@ -27,7 +27,8 @@ sub MAIN(
         $d = prompt("Enter a directory path: ");
     }
     if ( $d ) {
-        my $filecount = index( :directory($d) );
+        my $root-title = $d.IO.resolve.basename;
+        my $filecount = index( :directory($d), :$root-title );
     }
     else {
         say "ERROR: directory not defined.";
@@ -42,7 +43,7 @@ Index the directory given in the first arg, recursively.  If a true value is pas
 
 =end pod
 
-sub index( :$directory, :$subdir = 0 ) {
+sub index( :$directory, :$subdir = 0, :$root-title ) {
     my $output-file = "$directory/index.html";
     unless $directory.IO.d {
         say "The path you entered is not a directory or does not exist.";
@@ -65,7 +66,7 @@ sub index( :$directory, :$subdir = 0 ) {
             next if $file.basename.starts-with('.');
             next if $file.basename eq 'lib' || $file.basename eq '.git';
             
-            my $count = index( :directory( "$directory/{$file.basename}" ), :subdir(1) );
+            my $count = index( :directory( "$directory/{$file.basename}" ), :subdir(1), :$root-title );
             $totalsubfiles = $totalsubfiles + $count;
             $subdirs ~= "<li><a href='{$file.basename}/index.html'> 📁 {$file.basename} ($count)</a></li>\n";
         }
@@ -136,10 +137,8 @@ sub index( :$directory, :$subdir = 0 ) {
     my $template-file = 'index.tmpl';
     my $template = $template-file.IO.slurp;
 
-    # Load archive header from ARCHIVE_HEADER file in script directory
-    my $header-file = $*PROGRAM.parent.add('ARCHIVE_HEADER');
-    my $archive-header = $header-file.f ?? $header-file.slurp.trim !! 'The Archive';
-    $template ~~ s/'<!-- ARCHIVE_HEADER -->'/$archive-header/;
+    # Set the main header to the root directory name
+    $template ~~ s/'<!-- ARCHIVE_HEADER -->'/$root-title/;
     # if we *have* subdirectories
     if $subdirs {
         $template ~~ s/'<!-- SUBDIRS -->'/$subdirs/;
@@ -156,12 +155,12 @@ sub index( :$directory, :$subdir = 0 ) {
         $template ~~ s/'<!-- SUBDIR -->'//;
     }
     $template ~~ s/'<!-- CONTENT -->'/$content/;
-    my $dirname;
-    if $directory ~~ m| '/'? ( <-[/]>+ ) $ | {
-        $dirname = $0;  # everything after the last slash
-    }
-    $title = $dirname unless $title;
+    
+    $title = $directory.IO.basename;
+    my $subtitle = $subdir ?? $title !! '';
     $template ~~ s:g/'<!-- TITLE -->'/$title/;
+    $template ~~ s:g/'<!-- SUBTITLE -->'/$subtitle/;
+    
     my $now = DateTime.now;
     my @months = <None January February March April May June July August September October November December>;
     my @days   = <None Monday Tuesday Wednesday Thursday Friday Saturday Sunday>;
