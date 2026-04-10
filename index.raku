@@ -37,18 +37,29 @@ sub MAIN(
 
 =begin pod
 
-=head2 index( $dir, $subdir )
+=head2 index( :$directory, :$depth = 0, :$root-title )
 
-Index the directory given in the first arg, recursively.  If a true value is passed for the second arg, we know we are dealing with a subdirectory.
+Index the directory given in the first arg, recursively.  $depth tracks how deep we are from the root for relative paths.
 
 =end pod
 
-sub index( :$directory, :$subdir = 0, :$root-title ) {
+sub index( :$directory, :$depth = 0, :$root-title ) {
     my $output-file = "$directory/index.html";
     unless $directory.IO.d {
         say "The path you entered is not a directory or does not exist.";
         say "Path: {$directory.IO}";
         return;
+    }
+
+    # Copy slideshow.js to the root of the archive if we are at the top level
+    if $depth == 0 {
+        my $p = $*PROGRAM.absolute;
+        my $progdir = $p.IO.dirname;
+        my $js-source = "$progdir/lib/slideshow.js";
+        my $js-dest = "$directory/slideshow.js";
+        if $js-source.IO.f {
+            $js-source.IO.copy($js-dest);
+        }
     }
     
     my $content = ''; my $title = '';
@@ -66,7 +77,7 @@ sub index( :$directory, :$subdir = 0, :$root-title ) {
             next if $file.basename.starts-with('.');
             next if $file.basename eq 'lib' || $file.basename eq '.git';
             
-            my $count = index( :directory( "$directory/{$file.basename}" ), :subdir(1), :$root-title );
+            my $count = index( :directory( "$directory/{$file.basename}" ), :depth($depth + 1), :$root-title );
             $totalsubfiles = $totalsubfiles + $count;
             $subdirs ~= "<li><a href='{$file.basename}/index.html'> 📁 {$file.basename} ($count)</a></li>\n";
         }
@@ -146,9 +157,14 @@ sub index( :$directory, :$subdir = 0, :$root-title ) {
     else {
         $template ~~ s/'<!-- SUBDIRS -->'//;
     }
+    
+    # Calculate relative path to root for JS file
+    my $js-rel-path = '../' x $depth;
+    $template ~~ s/'<!-- JS_REL_PATH -->'/$js-rel-path/;
+
     # if we *are* a subdirectory
     my $linkup = "<h3 style='margin: 0;'><a href='../index.html'>../</a></h3>";
-    if $subdir {
+    if $depth > 0 {
         $template ~~ s/'<!-- SUBDIR -->'/$linkup/;
     }
     else {
@@ -157,7 +173,7 @@ sub index( :$directory, :$subdir = 0, :$root-title ) {
     $template ~~ s/'<!-- CONTENT -->'/$content/;
     
     $title = $directory.IO.basename;
-    my $subtitle = $subdir ?? $title !! '';
+    my $subtitle = $depth > 0 ?? $title !! '';
     $template ~~ s:g/'<!-- TITLE -->'/$title/;
     $template ~~ s:g/'<!-- SUBTITLE -->'/$subtitle/;
     
