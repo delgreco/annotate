@@ -71,7 +71,7 @@
         <div id="slideshow_control" style="font-size: 0.9em; color: #666; white-space: nowrap;">
             <input type="checkbox" id="slideshow_toggle" onClick="toggleSlideshow();" style="vertical-align: middle; cursor: pointer;"> <label for="slideshow_toggle">Slideshow</label>
             <span id="slideshow_duration_container" style="display: none; margin-left: 10px;">
-                show each image for <input type="number" id="slideshow_duration" value="30" min="1" style="width: 45px; vertical-align: middle; background: transparent; border: 1px solid #ccc; border-radius: 3px; padding: 2px;" onchange="updateSlideshowInterval();"> seconds
+                show each image for <input type="number" id="slideshow_duration" value="30" min="1" style="width: 45px; vertical-align: middle; background: transparent; border: 1px solid #ccc; border-radius: 3px; padding: 2px;" oninput="updateSlideshowInterval();"> seconds
             </span>
         </div>
     </div>
