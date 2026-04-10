@@ -53,6 +53,7 @@ let currentIndex = 0;
 let previousIndex = -1;
 let isPaused = false;
 let isSlideshowEnabled = true;
+let slideshowInterval;
 
 function updateHighlights() {
     // Remove all highlights first
@@ -141,6 +142,61 @@ function updateSlideshowUI() {
     if (cb) {
         cb.checked = isSlideshowEnabled;
     }
+    const container = document.getElementById('slideshow_duration_container');
+    if (container) {
+        container.style.display = isSlideshowEnabled ? 'inline' : 'none';
+    }
+    updateSlideshowInterval();
+}
+
+function updateSlideshowInterval() {
+    if (slideshowInterval) {
+        clearInterval(slideshowInterval);
+    }
+    
+    if (!isSlideshowEnabled) return;
+    
+    if (images.length <= 1) return;
+
+    const durationInput = document.getElementById('slideshow_duration');
+    const seconds = durationInput ? parseInt(durationInput.value) : 30;
+    const ms = (seconds || 30) * 1000;
+
+    slideshowInterval = setInterval(nextSlide, ms);
+}
+
+function nextSlide() {
+    if (!isSlideshowEnabled || isPaused) return;
+    
+    previousIndex = currentIndex;
+    
+    // Select a random image, but try to avoid picking the same one twice in a row
+    let nextIndex;
+    if (images.length > 1) {
+        do {
+            nextIndex = Math.floor(Math.random() * images.length);
+        } while (nextIndex === currentIndex);
+    } else {
+        nextIndex = 0;
+    }
+    
+    currentIndex = nextIndex;
+    const nextImg = images[currentIndex];
+    const imgElement = document.getElementById('img');
+    const imgLink = document.getElementById('img_link');
+    const captionElement = document.getElementById('caption');
+
+    // Simple fade effect using opacity
+    imgElement.style.transition = 'opacity 1s ease-in-out';
+    imgElement.style.opacity = 0;
+
+    setTimeout(() => {
+        imgElement.src = nextImg.filename;
+        imgLink.href = nextImg.filename;
+        captionElement.textContent = nextImg.caption;
+        imgElement.style.opacity = 1;
+        updateHighlights();
+    }, 1000);
 }
 
 function startSlideshow() {
@@ -160,40 +216,6 @@ function startSlideshow() {
         if (ctrl) ctrl.style.display = 'none';
         return;
     }
-    
-    setInterval(() => {
-        if (!isSlideshowEnabled || isPaused) return;
-        
-        previousIndex = currentIndex;
-        
-        // Select a random image, but try to avoid picking the same one twice in a row
-        let nextIndex;
-        if (images.length > 1) {
-            do {
-                nextIndex = Math.floor(Math.random() * images.length);
-            } while (nextIndex === currentIndex);
-        } else {
-            nextIndex = 0;
-        }
-        
-        currentIndex = nextIndex;
-        const nextImg = images[currentIndex];
-        const imgElement = document.getElementById('img');
-        const imgLink = document.getElementById('img_link');
-        const captionElement = document.getElementById('caption');
-
-        // Simple fade effect using opacity
-        imgElement.style.transition = 'opacity 1s ease-in-out';
-        imgElement.style.opacity = 0;
-
-        setTimeout(() => {
-            imgElement.src = nextImg.filename;
-            imgLink.href = nextImg.filename;
-            captionElement.textContent = nextImg.caption;
-            imgElement.style.opacity = 1;
-            updateHighlights();
-        }, 1000);
-    }, 30000); // 30 seconds
 }
 
 window.onload = startSlideshow;
@@ -219,6 +241,9 @@ window.onload = startSlideshow;
         </div>
         <div id="slideshow_control" style="font-size: 0.9em; color: #666; white-space: nowrap;">
             <input type="checkbox" id="slideshow_toggle" onClick="toggleSlideshow();" style="vertical-align: middle; cursor: pointer;"> <label for="slideshow_toggle">Slideshow</label>
+            <span id="slideshow_duration_container" style="display: none; margin-left: 10px;">
+                show each image for <input type="number" id="slideshow_duration" value="30" min="1" style="width: 45px; vertical-align: middle; background: transparent; border: 1px solid #ccc; border-radius: 3px; padding: 2px;" onchange="updateSlideshowInterval();"> seconds
+            </span>
         </div>
     </div>
 
